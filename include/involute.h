@@ -2,6 +2,7 @@
 #define INVOLUTE_H
 
 #include <stdint.h>
+#include <math.h>
 
 #define INVOLUTE_MASK_64 0xFFFFFFFFFFFFFFFFULL
 
