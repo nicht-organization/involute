@@ -1,29 +1,50 @@
-from typing import Any, Dict
-from pydantic import BaseModel, ConfigDict, model_validator
+import pytest
+from pydantic import ValidationError
+from involute import InvoluteGate
 
 
-class InvoluteGate(BaseModel):
-    """Pydantic model guard stripping unmapped fields and synthetic artifacts."""
+def test_double_negation_and_stripping():
+    payload = {
+        "valid_key": "data",
+        "_synthetic_flag": True,
+        "__internal_mem": 0xDEADBEEF,
+        "_valid_private": "kept",
+        "null_val": None,
+        "truthy_val": 1,
+        "falsy_zero": 0,
+        "falsy_bool": False,
+        "empty_str": "",
+    }
 
-    model_config = ConfigDict(extra="forbid")
+    cleaned = InvoluteGate.double_negation_sieve(payload)
 
-    @model_validator(mode="before")
-    @classmethod
-    def double_negation_sieve(cls, values: Any) -> Any:
-        if not isinstance(values, dict):
-            return values
+    # Valid items preserved
+    assert cleaned["valid_key"] == "data"
+    assert cleaned["_valid_private"] == "kept"
+    assert cleaned["null_val"] is None
+    assert cleaned["truthy_val"] == 1
+    assert cleaned["falsy_zero"] == 0
+    assert cleaned["falsy_bool"] is False
+    assert cleaned["empty_str"] == ""
 
-        cleaned: Dict[str, Any] = {}
-        for k, v in values.items():
-            # Reject artificial attributes and memory artifacts
-            if str(k).startswith("_synthetic_") or str(k).startswith("__"):
-                continue
+    # Synthetic artifacts purged
+    assert "_synthetic_flag" not in cleaned
+    assert "__internal_mem" not in cleaned
 
-            # Double negation filter logic: ~~x == x
-            not_v = None if v is None else not v
-            not_not_v = None if not_v is None else not not_v
 
-            if not_not_v == (bool(v) if v is not None else None):
-                cleaned[k] = v
+def test_non_dict_input_pass_through():
+    # Covers non-dict early return branch
+    assert InvoluteGate.double_negation_sieve("string_payload") == "string_payload"
+    assert InvoluteGate.double_negation_sieve([1, 2, 3]) == [1, 2, 3]
+    assert InvoluteGate.double_negation_sieve(None) is None
 
-        return cleaned
+
+def test_pydantic_extra_forbid():
+    class UserGate(InvoluteGate):
+        valid_key: str
+
+    user = UserGate(valid_key="ok")
+    assert user.valid_key == "ok"
+
+    with pytest.raises(ValidationError):
+        UserGate(valid_key="ok", unmapped_field="noise")

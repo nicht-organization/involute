@@ -23,7 +23,6 @@
 *.dll
 *.so.*
 
-
 # Fortran module files
 *.mod
 *.smod
@@ -43,6 +42,8 @@
 build/
 Build/
 build-*/
+dist/
+*.egg-info/
 
 # CMake generated files
 CMakeFiles/
@@ -67,3 +68,15 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# GCC Coverage Profiling Artifacts (GCOV)
+*.gcno
+*.gcda
+*.gcov
+
+# Compiled Binaries & Test Artifacts
+tests/test_involute
+__pycache__/

@@ -1,4 +1,4 @@
-"""involut: Double-negation data purification."""
+"""involute: Double-negation data purification."""
 
 from .schema import InvoluteGate
 

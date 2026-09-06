@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "involut"
+name = "involute"
 version = "0.0.1.dev1"
 description = "Apophatic data purification filter using double-negation logic"
 readme = "README.md"
@@ -14,3 +14,6 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["python"]
+
+[tool.setuptools.package-data]
+involute = ["libinvolute.so"]
