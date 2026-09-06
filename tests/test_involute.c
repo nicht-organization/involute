@@ -5,7 +5,7 @@
 
 // Forward declaration of C wrapper exports
 InvoluteResult export_involute_eval(uint64_t raw_word, uint64_t boundary_mask);
-InvoluteEngineResult export_involute_eval_diophantine(uint64_t a, uint64_t b, uint64_t c, double eps);
+InvoluteEngineResult export_involute_eval_diophantine(uint64_t a, uint64_t b, uint64_t c, double eps, uint32_t flags);
 
 void test_c_success_path(void) {
     uint64_t raw_word = 0x00000000FFFFFFFFULL;
@@ -26,7 +26,7 @@ void test_c_failure_branch_and_collapse(void) {
 }
 
 void test_diophantine_wrapper_path(void) {
-    InvoluteEngineResult res = export_involute_eval_diophantine(2, 3, 5, 0.1);
+    InvoluteEngineResult res = export_involute_eval_diophantine(2, 3, 5, 0., GATE_ALL);
     assert(res.a == 2);
     assert(res.b == 3);
 }

@@ -6,6 +6,13 @@
 #include <math.h>
 
 #define INVOLUTE_MASK_64 0xFFFFFFFFFFFFFFFFULL
+#define GATE_MOD4  (1 << 0)
+#define GATE_MOD8  (1 << 1)
+#define GATE_MOD16 (1 << 2)
+#define GATE_MOD3  (1 << 3)
+#define GATE_MOD5  (1 << 4)
+#define GATE_MOD7  (1 << 5)
+#define GATE_ALL   (GATE_MOD4 | GATE_MOD8 | GATE_MOD16 | GATE_MOD3 | GATE_MOD5 | GATE_MOD7)
 
 typedef struct {
     uint64_t ground_truth;
@@ -24,8 +31,7 @@ typedef struct {
  * Executes an in-register involution (double negation) over 64-bit word state.
  */
 static inline InvoluteResult involute_eval(uint64_t raw_word, uint64_t boundary_mask) {
-    InvoluteResult result;
-    
+    InvoluteResult result;  
     uint64_t first_neg = (~raw_word) & INVOLUTE_MASK_64;
     uint64_t restored = (~first_neg) & INVOLUTE_MASK_64;
     
@@ -61,32 +67,45 @@ static inline uint8_t involut_verify_abc(uint64_t a, uint64_t b, uint64_t c, dou
 }
 
 // Mod-4 Parity Gate
-static inline uint8_t involut_gate_mod4(uint64_t z) {
-    return (z % 4 != 0);
-}
+static inline uint8_t involut_gate_mod4(uint64_t z) { return (z % 4 != 0); }
 
 // Mod-8 Quadratic Gate
 static inline uint8_t involut_gate_mod8(uint64_t a, uint64_t b, uint64_t c) {
-    uint64_t res_a = (a * a) % 8;
-    uint64_t res_b = (b * b) % 8;
-    uint64_t res_c = (c * c) % 8;
-    return ((res_a + res_b) % 8 == res_c);
+    return (((a * a) % 8 + (b * b) % 8) % 8 == (c * c) % 8);
 }
 
 // Mod-16 Residue Gate
 static inline uint8_t involut_gate_mod16(uint64_t a, uint64_t b, uint64_t c) {
-    uint64_t rem = (a + b) % 16;
-    return (rem != (c % 16)); 
+    return (((a + b) % 16) != (c % 16));
 }
 
-static inline uint8_t involut_gate_composition(uint64_t z) {
-    if (!involut_gate_mod4(z)) return 0;
-    return 1;
+// New Modular Gates: Mod-3, Mod-5, Mod-7
+static inline uint8_t involut_gate_mod3(uint64_t a, uint64_t b, uint64_t c) {
+    return (((a % 3) + (b % 3)) % 3 == (c % 3));
+}
+static inline uint8_t involut_gate_mod5(uint64_t a, uint64_t b, uint64_t c) {
+    // Quadratic residues mod 5 are {0, 1, 4}
+    uint64_t ra = (a * a) % 5;
+    uint64_t rb = (b * b) % 5;
+    uint64_t rc = (c * c) % 5;
+    return ((ra + rb) % 5 == rc);
+}
+static inline uint8_t involut_gate_mod7(uint64_t a, uint64_t b, uint64_t c) {
+    // Cubic residues mod 7 are {0, 1, 6}
+    uint64_t ra = (a * a * a) % 7;
+    uint64_t rb = (b * b * b) % 7;
+    uint64_t rc = (c * c * c) % 7;
+    return ((ra + rb) % 7 == rc);
 }
 
-static inline uint8_t involut_gate_composition8(uint64_t a, uint64_t b, uint64_t c) {
-    if (!involut_gate_mod4(c)) return 0;
-    if (!involut_gate_mod8(a, b, c)) return 0;
+// Configurable Gate Evaluator
+static inline uint8_t involut_gate_composition_configurable(uint64_t a, uint64_t b, uint64_t c, uint32_t flags) {
+    if ((flags & GATE_MOD4)  && !involut_gate_mod4(c)) return 0;
+    if ((flags & GATE_MOD8)  && !involut_gate_mod8(a, b, c)) return 0;
+    if ((flags & GATE_MOD16) && !involut_gate_mod16(a, b, c)) return 0;
+    if ((flags & GATE_MOD3)  && !involut_gate_mod3(a, b, c)) return 0;
+    if ((flags & GATE_MOD5)  && !involut_gate_mod5(a, b, c)) return 0;
+    if ((flags & GATE_MOD7)  && !involut_gate_mod7(a, b, c)) return 0;
     return 1;
 }
 

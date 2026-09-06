@@ -80,3 +80,4 @@ htmlcov/
 # Compiled Binaries & Test Artifacts
 tests/test_involute
 __pycache__/
+.vscode/
