@@ -9,8 +9,8 @@ rm -rf build/ dist/ *.egg-info python/involute/*.so tests/test_involute_prod
 find . -type f -name "*.gcda" -delete
 find . -type f -name "*.gcno" -delete
 
-echo "=== [2/3] Compiling Native Shared Library (Prod Mode: -O3, -march=native, -flto) ==="
-gcc -O3 -march=native -flto -s -fPIC -shared \
+echo "=== Compiling OpenMP Parallel + MMAP Production Library ==="
+gcc -O3 -march=native -flto -fopenmp -s -fPIC -shared \
     -Iinclude \
     src/involute_wrapper.c \
     -lm -o python/involute/libinvolute.so
