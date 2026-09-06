@@ -48,3 +48,10 @@ def test_pydantic_extra_forbid():
 
     with pytest.raises(ValidationError):
         UserGate(valid_key="ok", unmapped_field="noise")
+
+def test_schema_synthetic_key_pruning():
+    data = {"valid_key": 42, "_synthetic_junk": 999, "__dunder_junk": 123}
+    cleaned = InvoluteGate.filter(data)
+    assert "valid_key" in cleaned
+    assert "_synthetic_junk" not in cleaned
+    assert "__dunder_junk" not in cleaned

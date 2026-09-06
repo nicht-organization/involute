@@ -19,6 +19,26 @@ _lib.export_involute_eval_diophantine.argtypes = [
 ]
 _lib.export_involute_eval_diophantine.restype = CInvoluteEngineResult
 
+_lib.export_involute_batch_gate_eval.argtypes = [
+    ctypes.POINTER(ctypes.c_uint64),
+    ctypes.POINTER(ctypes.c_uint64),
+    ctypes.POINTER(ctypes.c_uint64),
+    ctypes.POINTER(ctypes.c_uint8),
+    ctypes.c_size_t,
+]
+_lib.export_involute_batch_gate_eval.restype = None
+
+def batch_evaluate_gates(a_list: list[int], b_list: list[int], c_list: list[int]) -> list[bool]:
+    """Runs vectorized SIMD Mod-4/Mod-8 gates on candidate arrays."""
+    length = len(a_list)
+    c_a = (ctypes.c_uint64 * length)(*a_list)
+    c_b = (ctypes.c_uint64 * length)(*b_list)
+    c_c = (ctypes.c_uint64 * length)(*c_list)
+    c_out = (ctypes.c_uint8 * length)()
+
+    _lib.export_involute_batch_gate_eval(c_a, c_b, c_c, c_out, length)
+    return [bool(x) for x in c_out]
+
 class CrossEquationUnifier:
     """Evaluates entire families of equations in one unified step."""
     def __init__(self, epsilon: float = 0.1):

@@ -75,4 +75,32 @@ static inline uint8_t involut_gate_composition(uint64_t z) {
     return 1;
 }
 
+// Mod-4 Parity Gate
+static inline uint8_t involut_gate_mod4(uint64_t z) {
+    return (z % 4 != 0); // Rejects 0 mod 4
+}
+
+// Mod-8 Quadratic/Cubic Non-Residue Gate
+static inline uint8_t involut_gate_mod8(uint64_t a, uint64_t b, uint64_t c) {
+    // Squares mod 8 are 0, 1, 4. Sums of squares cannot equal 7 mod 8
+    uint64_t res_a = (a * a) % 8;
+    uint64_t res_b = (b * b) % 8;
+    uint64_t res_c = (c * c) % 8;
+    return ((res_a + res_b) % 8 == res_c);
+}
+
+// Mod-16 Residue Gate
+static inline uint8_t involut_gate_mod16(uint64_t a, uint64_t b, uint64_t c) {
+    // Fourth powers mod 16 can only be 0 or 1
+    uint64_t rem = (a + b) % 16;
+    return (rem != (c % 16)); 
+}
+
+// System Gate Composite
+static inline uint8_t involut_gate_composition(uint64_t a, uint64_t b, uint64_t c) {
+    if (!involut_gate_mod4(c)) return 0;
+    if (!involut_gate_mod8(a, b, c)) return 0;
+    return 1;
+}
+
 #endif // INVOLUTE_H
