@@ -2,6 +2,7 @@
 #define INVOLUTE_H
 
 #include <stdint.h>
+#include <stddef.h>
 #include <math.h>
 
 #define INVOLUTE_MASK_64 0xFFFFFFFFFFFFFFFFULL
@@ -21,26 +22,20 @@ typedef struct {
 
 /**
  * Executes an in-register involution (double negation) over 64-bit word state.
- * Validates structural consistency and verifies state against permitted boundary constraints.
  */
 static inline InvoluteResult involute_eval(uint64_t raw_word, uint64_t boundary_mask) {
     InvoluteResult result;
     
-    // First Negation (~x): State/entropy inversion
     uint64_t first_neg = (~raw_word) & INVOLUTE_MASK_64;
-    
-    // Second Negation (~~x): In-register structural restoration
     uint64_t restored = (~first_neg) & INVOLUTE_MASK_64;
     
-    // Invariant & Boundary Check: Verify state restoration and ensure raw_word stays within boundary_mask
     if (restored == raw_word && (raw_word & ~boundary_mask) == 0x0ULL) {
         result.ground_truth = raw_word;
-        result.is_valid = 1;  // Valid ground truth retained
+        result.is_valid = 1;
     } else {
-        result.ground_truth = 0x0ULL; // Collapse corrupted/out-of-bounds state to NULL
-        result.is_valid = 0;  // Noise purged
+        result.ground_truth = 0x0ULL;
+        result.is_valid = 0;
     }
-    
     return result;
 }
 
@@ -65,24 +60,13 @@ static inline uint8_t involut_verify_abc(uint64_t a, uint64_t b, uint64_t c, dou
     return ((double)c < bound) ? 1 : 0;
 }
 
-// 3. Analytical Gate Composition
-static inline uint8_t involut_gate_mod4(uint64_t z) {
-    return (z % 4 != 0); // Reject bad parity
-}
-
-static inline uint8_t involut_gate_composition(uint64_t z) {
-    if (!involut_gate_mod4(z)) return 0;
-    return 1;
-}
-
 // Mod-4 Parity Gate
 static inline uint8_t involut_gate_mod4(uint64_t z) {
-    return (z % 4 != 0); // Rejects 0 mod 4
+    return (z % 4 != 0);
 }
 
-// Mod-8 Quadratic/Cubic Non-Residue Gate
+// Mod-8 Quadratic Gate
 static inline uint8_t involut_gate_mod8(uint64_t a, uint64_t b, uint64_t c) {
-    // Squares mod 8 are 0, 1, 4. Sums of squares cannot equal 7 mod 8
     uint64_t res_a = (a * a) % 8;
     uint64_t res_b = (b * b) % 8;
     uint64_t res_c = (c * c) % 8;
@@ -91,13 +75,16 @@ static inline uint8_t involut_gate_mod8(uint64_t a, uint64_t b, uint64_t c) {
 
 // Mod-16 Residue Gate
 static inline uint8_t involut_gate_mod16(uint64_t a, uint64_t b, uint64_t c) {
-    // Fourth powers mod 16 can only be 0 or 1
     uint64_t rem = (a + b) % 16;
     return (rem != (c % 16)); 
 }
 
-// System Gate Composite
-static inline uint8_t involut_gate_composition(uint64_t a, uint64_t b, uint64_t c) {
+static inline uint8_t involut_gate_composition(uint64_t z) {
+    if (!involut_gate_mod4(z)) return 0;
+    return 1;
+}
+
+static inline uint8_t involut_gate_composition8(uint64_t a, uint64_t b, uint64_t c) {
     if (!involut_gate_mod4(c)) return 0;
     if (!involut_gate_mod8(a, b, c)) return 0;
     return 1;
