@@ -1,0 +1,3 @@
+graft include
+graft src
+include python/involute/libinvolute.so
