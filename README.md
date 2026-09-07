@@ -33,11 +33,13 @@ Evaluated on a 2-core / 4GB RAM instance over 10,000,000 candidate triples:
 | :--- | :--- | :--- | :--- |
 | **In-Memory Batch Gate (SIMD)** | `~2,030,210 evals/sec` | `4.92s` | Minimal (Python list) |
 | **Zero-Copy MMAP Stream (OpenMP)** | `~215,630,489 evals/sec` | `0.046s` | `0 MB` (Direct Disk Page) |
+| **Async-Non blocking stream** | `~9,528,364.91 evals/sec` | `1.0495s` | Minimal (Python list) |
+
 
 ## Installation
 
 ```bash
-git clone [https://github.com/nicht-organization/involute.git](https://github.com/nicht-organization/involute.git)
+git clone https://github.com/nicht-organization/involute.git
 cd involute
 pip install -e .
 ```
@@ -105,11 +107,15 @@ Run native C harness and Python integration test suites:
 # Compile production OpenMP / MMAP dynamic library
 ./build_prod.sh
 
+# Run serial benchmark
+python python/benchmarks/run_bench.py
+
 # Run streaming benchmark
 python python/benchmarks/run_stream_bench.py
 
-# Run serial benchmar
-python python/benchmarks/run_bench.py
+# Run async benchmark
+python python/benchmarks/run_async_bench.py
+
 ```
 
 ## High-Performance Data Purification API & Application Patterns
@@ -236,7 +242,52 @@ if __name__ == "__main__":
 
 ```
 
+## Benchmark Results
+
+# Engine Benchmark
+
+```bash
+python python/benchmarks/run_bench.py 
+=== INVOLUTE UNIFIED ENGINE BENCHMARK (10,000,000 Triples) ===
+
+[1/2] Generating In-Memory Triples...
+Running In-Memory SIMD Gate Evaluation (All Modular Gates)...
+Passed Gates: 14,207 / 10,000,000
+Completed in: 5.4835 seconds
+Throughput:   1,823,652.73 evals/sec
+
+[2/2] Generating Binary Dataset File on Disk...
+File created: 228.88 MB on disk.
+Executing Zero-Copy MMAP + OpenMP File Stream...
+Passed Gates: 14,343 / 10,000,000
+Completed in: 1.0592 seconds
+Throughput:   9,441,253.80 evals/sec
+```
+
+### In-Mem Benchmark
+```bash
+python python/benchmarks/run_stream_bench.py 
+Generating binary dataset on disk (10,000,000 triples)...
+File created: 228.88 MB on disk.
+
+Executing Zero-Copy MMAP + OpenMP Parallel Sweep...
+Streamed & Evaluated: 10,000,000 triples
+Time Taken:            0.0529 seconds
+Stream Throughput:     189,179,228.14 evals/sec
+```
+
+### Async Benchmark
+```bash
+python python/benchmarks/run_async_bench.py 
+=== INVOLUTE ASYNC NON-BLOCKING STREAM BENCHMARK ===
+Generating binary dataset (10,000,000 triples)...
+Async Evaluated: 10,000,000 triples
+Completed in:    1.0495 seconds
+Throughput:      9,528,364.91 evals/sec
+Event Loop State: Main thread remained 100% non-blocking!
+```
+
+
 ## License
 
-[The Unlicense](LICENSE)
-
+[The Unlicense](LICENSE), what else?
