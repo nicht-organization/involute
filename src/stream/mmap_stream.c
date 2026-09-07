@@ -5,7 +5,7 @@
 #include "stream/mmap_engine.h"
 #include "core/gates.h"
 
-size_t export_involute_mmap_stream_eval(const char* filepath, uint8_t* results_out, uint32_t flags) {
+size_t export_involute_mmap_stream_eval(const char* filepath, uint8_t* restrict results_out, uint32_t flags) {
     int fd = open(filepath, O_RDONLY);
     if (fd == -1) return 0;
 
@@ -27,6 +27,11 @@ size_t export_involute_mmap_stream_eval(const char* filepath, uint8_t* results_o
     close(fd);
 
     if (map == MAP_FAILED) return 0;
+
+    // Hint page cache for sequential multi-threaded read-ahead
+#ifdef MADV_WILLNEED
+    madvise(map, file_size, MADV_SEQUENTIAL | MADV_WILLNEED);
+#endif
 
     #pragma omp parallel for schedule(static)
     for (size_t i = 0; i < num_triples; i++) {
