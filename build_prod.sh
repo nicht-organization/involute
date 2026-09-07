@@ -1,26 +1,18 @@
 #!/usr/bin/env bash
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+echo "=== [1/3] Cleaning build artifacts ==="
+rm -rf build/ dist/ *.egg-info python/involute/libinvolute.so
 
-echo "=== [1/3] Cleaning debug build artifacts ==="
-rm -rf build/ dist/ *.egg-info python/involute/*.so tests/test_involute_prod
-find . -type f -name "*.gcda" -delete
-find . -type f -name "*.gcno" -delete
-
-echo "=== Compiling OpenMP Parallel + MMAP Production Library ==="
-gcc -O3 -march=native -flto -fopenmp -s -fPIC -shared \
+echo "=== [2/3] Compiling Modular OpenMP + MMAP Shared Library ==="
+gcc -shared -fPIC -O3 -march=native -flto -fopenmp \
     -Iinclude \
-    src/involute_wrapper.c \
+    src/core/*.c src/math/*.c src/stream/*.c \
     -lm -o python/involute/libinvolute.so
 
-echo "=== [3/3] Compiling Benchmark & Production Test Harness ==="
-gcc -O3 -march=native -flto -Iinclude \
-    tests/test_involute.c \
-    src/involute_wrapper.c \
-    -lm -o tests/test_involute_prod
-
-./tests/test_involute_prod
+echo "=== [3/3] Compiling & Running C Suite ==="
+gcc -O3 -march=native -Iinclude tests/c/test_involute.c python/involute/libinvolute.so -lm -o tests/c/runner
+./tests/c/runner
+rm -f tests/c/runner
 
 echo "=== PRODUCTION BUILD READY IN python/involute/libinvolute.so ==="

@@ -5,12 +5,21 @@ from setuptools.command.build_py import build_py
 
 
 class BuildInvoluteCFFI(build_py):
-    """Custom build step to compile the C shared library before packaging Python modules."""
+    """Custom build step to compile the C shared library across modular subdirectories."""
 
     def run(self):
-        c_source = os.path.join("src", "involute_wrapper.c")
-        output_so = os.path.join("python", "involute", "libinvolute.so")
+        output_dir = os.path.join("python", "involute")
+        output_so = os.path.join(output_dir, "libinvolute.so")
         include_dir = "include"
+
+        os.makedirs(output_dir, exist_ok=True)
+
+        c_sources = [
+            os.path.join("src", "core", "register.c"),
+            os.path.join("src", "math", "diophantine.c"),
+            os.path.join("src", "math", "radical.c"),
+            os.path.join("src", "stream", "mmap_stream.c"),
+        ]
 
         compile_cmd = [
             "gcc",
@@ -21,15 +30,14 @@ class BuildInvoluteCFFI(build_py):
             "-flto",
             "-fopenmp",
             f"-I{include_dir}",
-            c_source,
+            *c_sources,
             "-lm",
             "-o",
             output_so,
         ]
 
-        print(f"Building C shared library (Prod + OpenMP): {' '.join(compile_cmd)}")
+        print(f"Building C shared library: {' '.join(compile_cmd)}")
         subprocess.check_call(compile_cmd)
-
         super().run()
 
 

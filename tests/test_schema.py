@@ -71,3 +71,13 @@ def test_schema_synthetic_key_pruning_sieve():
     assert "valid_key" in cleaned
     assert "_synthetic_junk" not in cleaned
     assert "__dunder_junk" not in cleaned
+
+def test_schema_default_instantiation_skips_kernel():
+    # Hits raw_word == 0 and default boundary_mask condition
+    gate = InvoluteGate()
+    assert gate.raw_word == 0
+    assert gate.is_valid is False
+
+def test_schema_preprocess_non_dict_pass_through():
+    # Hits non-dict check in preprocess_payload (line 19)
+    assert InvoluteGate.preprocess_payload("raw_string") == "raw_string"

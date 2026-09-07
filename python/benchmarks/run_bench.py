@@ -2,8 +2,9 @@
 import os
 import time
 import numpy as np
-from involute.diophantine import batch_evaluate_gates, stream_file
-from involute.ffi import GATE_ALL
+from involute.math.diophantine import batch_evaluate_gates
+from involute.stream.mmap import stream_file
+from involute.core.ffi import GATE_ALL
 
 def run_unified_benchmarks(num_triples: int = 10_000_000):
     print(f"=== INVOLUTE UNIFIED ENGINE BENCHMARK ({num_triples:,} Triples) ===")
